@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <form action="{{ url_for('add_book') }}" method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="bookTitle" class="form-label">Название книги</label>
+          <input type="text" required class="form-control" name="title" id="bookTitle">
+        </div>
+        <div class="mb-3">
+          <label for="bookYear" class="form-label">Год</label>
+          <input type="number" required class="form-control" name="year" id="bookYear">
+        </div>
+        <div class="mb-3">
+          <label for="bookPublisher" class="form-label">Издательство</label>
+          <input type="text" required class="form-control" name="publisher" id="bookPublisher">
+        </div>
+         <div class="mb-3">
+          <label for="bookAuthor" class="form-label">Автор</label>
+          <input type="text" required class="form-control" name="author" id="bookAuthor">
+        </div>
+         <div class="mb-3">
+          <label for="bookPageCount" class="form-label">Количество страниц</label>
+          <input type="number" required class="form-control" name="page_count" id="bookPageCount">
+        </div>
+        <div class="mb-3">
+          <label for="bookGenres" class="form-label">Жанры</label>
+          <select class="form-select" required multiple aria-label="Multiple select example" name="genres_id">
+              {% for genre in genres %}
+                 <option value="{{ genre.id }}">{{ genre.name }}</option>
+              {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="bookDescription" class="form-label">Описание книги</label>
+          <textarea class="form-control" id="bookDescription" required name="short_description" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="bookCover" class="form-label">Обложка</label>
+          <input class="form-control" type="file" required id="bookCover" name="book_cover">
+        </div>
+        <button class="btn btn-primary" type="submit">Сохранить</button>
+    </form>
+{% endblock %}
+
+{% block additional_scripts %}
+    <script>
+      const easyMDE = new EasyMDE({
+        element: document.getElementById('bookDescription'),
+        forceSync: true,
+      });
+    </script>
+{% endblock %}

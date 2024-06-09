@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-center my-4">Список книг</h1>
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for book in books.items %}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-body" >
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text d-flex flex-column">
+                    {% if book.covers_filename %}
+                    <img src="{{ url_for('image_path', filename=book.covers_filename) }}"
+                    class="img-fluid rounded-start user-select-none " alt="..." style="max-width: 250px;" >
+                    {% endif %}
+                    <div><strong>Название книги:</strong> {{ book.name }}<br></div>
+                    {% set genres_split = book.genres.split(',') %}
+                    <div><strong>Жанр(ы):</strong> {{ genres_split |join(", ") }}<br></div>
+                    <div><strong>Год:</strong> {{ book.year }}<br></div>
+                    <div><strong>Средняя оценка:</strong> {%if book.average_rating%}{{ book.average_rating }}{%else%}0{%endif%}<br></div>
+                    <div><strong>Количество рецензий:</strong> {{ book.review_count }}</div><br>
+                    <div class="d-flex flex-row">
+                        <a href="{{ url_for('show_book', book_id=book.books_id) }}" type="button" class="btn btn-primary px-4 me-2" ><i class="fa-regular fa-eye" style="color: #ffffff;"></i></a>
+                        {%if current_user.is_authenticated%}
+                        {%if current_user.can("editBook") %} 
+                        <a type="button" class="btn btn-warning px-4 me-2"><i class="fa-regular fa-pen-to-square"></i></a>
+                        {%endif%}
+                        {%if current_user.can("deleteBook") %}
+                        <a type="button" class="btn btn-danger px-4"><i class="fa-solid fa-ban"></i></a>
+                        {%endif%}
+                        {%endif%}
+                    </div>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center my-4">
+        {% if books.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('index', page=books.prev_num) }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </span>
+        </li>
+        {% endif %}
+        
+        {% for page_num in books.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+        {% if page_num %}
+        <li class="page-item {% if page_num == books.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('index', page=page_num) }}">{{ page_num }}</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+        {% endfor %}
+
+        {% if books.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('index', page=books.next_num) }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %}
