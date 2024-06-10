@@ -163,137 +163,18 @@ def role_name():
 
     return role.role_name if role else None
         
-
-@app.route('/books/edit/<int:book_id>', methods=['GET', 'POST'])
-@login_required
-def edit_book(book_id):
-    book = Book.query.get_or_404(book_id)
-    if request.method == 'POST':
-        book.title = request.form['title']
-        book.author = request.form['author']
-        book.publisher = request.form['publisher']
-        book.page_count = request.form['page_count']
-        book.description = request.form['short_description']
-        book.year = request.form['year']
-
-        genres_id = request.form.getlist('genres_id')
-        book.genres.clear()
-        for genre_id in genres_id:
-            genre = Genre.query.get(genre_id)
-            if genre:
-                book.genres.append(genre)
-
-        db.session.commit()
-        flash('Книга успешно обновлена!', 'success')
-        return redirect(url_for('book_detail', book_id=book_id))
-
-    genres = Genre.query.all()
-    book_genre_ids = [genre.id for genre in book.genres]
-    return render_template('edit.html', book=book, genres=genres, book_genre_ids=book_genre_ids)
-
-
-@app.route('/books/delete/<int:book_id>', methods=['POST'])
-@login_required
-def delete_book(book_id):
-    book = Book.query.get_or_404(book_id)
-    db.session.delete(book)
-    db.session.commit()
-    flash('Книга успешно удалена!', 'success')
-    return redirect(url_for('index'))
-
-
-@app.route('/books/review/<int:book_id>', methods=['GET', 'POST'])
-@login_required
-def review_book(book_id):
-    book = Book.query.get_or_404(book_id)
-    if request.method == 'POST':
-        rating = request.form['rating']
-        text = request.form['text']
-
-        new_review = Review(user_id=current_user.id,
-                            book_id=book_id, rating=rating, content=text)
-        db.session.add(new_review)
-        db.session.commit()
-
-        flash('Рецензия успешно добавлена!', 'success')
-        return redirect(url_for('book_detail', book_id=book_id))
-
-    scores = {1: '1 - Очень плохо', 2: '2 - Плохо',
-              3: '3 - Средне', 4: '4 - Хорошо', 5: '5 - Отлично'}
-    return render_template('feedback.html', scores=scores)
-
-@app.route('/show_book/<int:book_id>')
+@app.route('/books/show_book/<int:book_id>')
 @login_required
 def show_book(book_id):
-    # book = (
-    #     db.session.query(
-    #     Book.name.label("name"),
-    #     Book.year.label("year"),
-    #     Book.desc.label("desc"),
-    #     func.avg(Review.rating).label('average_rating')
-    #     )
-    #     .join(GenreToBook, Book.id == GenreToBook.book_id)
-    #     .join(Genre, Genre.id == GenreToBook.genre_id)
-    #     .join(Review, Review.book_id == Book.id)
-    #     .filter(Book.id == book_id)
-    #     .group_by(Book.id)
-    # ).one()
-        
-    # return render_template('books/show_book.html', book=book)  
-
-
-    # book = db.session.query(
-    #     Book.id,
-    #     Book.name,
-    #     Book.year,
-    #     Book.desc,
-    #     func.coalesce(func.avg(Review.rating), 0).label('average_rating'),
-    #     func.group_concat(Genre.name).label('genres')
-    # ).join(
-    #     GenreToBook, GenreToBook.book_id == Book.id, isouter=True
-    # ).join(
-    #     Genre, Genre.id == GenreToBook.genre_id, isouter=True
-    # ).join(
-    #     Review, Review.book_id == Book.id, isouter=True
-    # ).filter(
-    #     Book.id == book_id
-    # ).group_by(
-    #     Book.id
-    # ).first()
-
-    # reviews = db.session.query(Review).filter_by(book_id=book_id).all()
-    # return render_template('books/show_book.html', book=book, reviews=reviews)
-
-    # book = db.session.query(
-    #     Book.id,
-    #     Book.name,
-    #     Book.year,
-    #     Book.desc,
-    #     func.coalesce(func.avg(Review.rating), 0).label('average_rating'),
-    #     func.group_concat(Genre.name).label('genres'),
-    #     Cover.filename.label('cover_filename')
-    # ).join(
-    #     GenreToBook, GenreToBook.book_id == Book.id, isouter=True
-    # ).join(
-    #     Genre, Genre.id == GenreToBook.genre_id, isouter=True
-    # ).join(
-    #     Review, Review.book_id == Book.id, isouter=True
-    # ).join(
-    #     Cover, Cover.id == Book.cover_id, isouter=True
-    # ).filter(
-    #     Book.id == book_id
-    # ).group_by(
-    #     Book.id, Cover.filename
-    # ).first()
-
-    # reviews = db.session.query(Review).filter_by(book_id=book_id).options(joinedload(Review.user_id)).all()
-    # return render_template('books/show_book.html', book=book, reviews=reviews)
-
+    
     book = db.session.query(
         Book.id,
         Book.name,
         Book.year,
         Book.desc,
+        Book.publisher,
+        Book.author,
+        Book.volume,
         func.coalesce(func.avg(Review.rating), 0).label('average_rating'),
         func.group_concat(Genre.name).label('genres'),
         Cover.filename.label('cover_filename')
@@ -310,7 +191,6 @@ def show_book(book_id):
     ).group_by(
         Book.id, Cover.filename
     ).first()
-    print("vbfuibdngvfgbveoauyigvfhn gouvibdnfvboueduofvijnpibfgvo",book.cover_filename)
 
     reviews = db.session.query(
         Review.id,
@@ -325,6 +205,83 @@ def show_book(book_id):
 
     return render_template('books/show_book.html', book=book, reviews=reviews) 
 
+@app.route('/books/edit/<int:book_id>', methods=['GET', 'POST'])
+@login_required
+def edit_book(book_id):
+    book = db.session.query(Book).get(book_id)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    if book is None:
+        flash('Книга не найдена', 'danger')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        book.name = request.form.get('name')
+        book.author = request.form.get('author')
+        book.publisher = request.form.get('publisher')
+        book.volume = request.form.get('volume')
+        book.desc = request.form.get('desc')
+        book.year = request.form.get('year')
+
+        genres_id = request.form.getlist('genres_id')
+        db.session.query(GenreToBook).filter(GenreToBook.book_id == book_id).delete()
+        for genre_id in genres_id:
+            genre = db.session.query(Genre).get(genre_id)
+            if genre is None:
+                flash('Жанр не найден', 'danger')
+                return redirect(url_for('edit_book', book_id=book_id))
+            genre_to_book = GenreToBook(book_id=book.id, genre_id=genre_id)
+            db.session.add(genre_to_book)
+
+        db.session.commit()
+        flash('Книга успешно обновлена!', 'success')
+        return redirect(url_for('show_book', book_id=book_id))
+
+    genres = db.session.query(Genre).all()
+    book_genres = db.session.query(Genre).join(GenreToBook, Genre.id == GenreToBook.genre_id).filter(GenreToBook.book_id == book.id).all()
+    book_genre_ids = [genre.id for genre in book_genres]
+
+    return render_template('books/edit.html',
+                           book=book,
+                           genres=genres,
+                           book_genre_ids=book_genre_ids)
+
+@app.route('/books/delete/<int:book_id>', methods=['POST'])
+@login_required
+def delete_book(book_id):
+    book = db.session.query(Book).filter_by(id=book_id).first()
+    
+    if book is None:
+        flash('Книга не найдена', 'danger')
+        return redirect(url_for('index'))
+
+    if not current_user.can("deleteBook"):
+        flash('У вас нет прав на удаление этой книги', 'danger')
+        return redirect(url_for('index'))
+    
+
+    # Удаление самой книги
+    db.session.delete(book)
+    db.session.commit()
+
+    cover_path = None
+    if book.cover_id:
+        cover = db.session.query(Cover).filter_by(id=book.cover_id).first()
+        if cover:
+            try: 
+                cover_path = os.path.join(app.config['UPLOAD_FOLDER'], cover.filename)
+                db.session.delete(cover)
+                db.session.commit()
+                os.remove(cover_path)
+            except Exception:
+                pass
+            
+
+
+    # if cover_path and os.path.exists(cover_path):
+    #     os.remove(cover_path)
+
+    flash('Книга успешно удалена!', 'success')
+    return redirect(url_for('index'))
+
+# if __name__ == '__main__':
+#     app.run(debug=True)

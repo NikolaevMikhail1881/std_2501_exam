@@ -9,26 +9,28 @@
             <div class="card-body" >
                 <h5 class="card-title">{{ book.title }}</h5>
                 <p class="card-text d-flex flex-column">
+                    <div class="text-center">
                     {% if book.covers_filename %}
                     <img src="{{ url_for('image_path', filename=book.covers_filename) }}"
-                    class="img-fluid rounded-start user-select-none " alt="..." style="max-width: 250px;" >
+                    class="img-fluid rounded-start user-select-none " alt="..." style="max-width: 300px;" >
                     {% endif %}
-                    <div><strong>Название книги:</strong> {{ book.name }}<br></div>
+                    <div class="text-break"><strong>Название книги:</strong> {{ book.name }}<br></div>
                     {% set genres_split = book.genres.split(',') %}
                     <div><strong>Жанр(ы):</strong> {{ genres_split |join(", ") }}<br></div>
                     <div><strong>Год:</strong> {{ book.year }}<br></div>
                     <div><strong>Средняя оценка:</strong> {%if book.average_rating%}{{ book.average_rating }}{%else%}0{%endif%}<br></div>
                     <div><strong>Количество рецензий:</strong> {{ book.review_count }}</div><br>
-                    <div class="d-flex flex-row">
+                    <div class="d-flex flex-row justify-content-center">
                         <a href="{{ url_for('show_book', book_id=book.books_id) }}" type="button" class="btn btn-primary px-4 me-2" ><i class="fa-regular fa-eye" style="color: #ffffff;"></i></a>
                         {%if current_user.is_authenticated%}
                         {%if current_user.can("editBook") %} 
-                        <a type="button" class="btn btn-warning px-4 me-2"><i class="fa-regular fa-pen-to-square"></i></a>
+                        <a href="{{ url_for('edit_book', book_id=book.books_id) }}" type="button" class="btn btn-warning px-4 me-2"><i class="fa-regular fa-pen-to-square"></i></a>
                         {%endif%}
                         {%if current_user.can("deleteBook") %}
-                        <a type="button" class="btn btn-danger px-4"><i class="fa-solid fa-ban"></i></a>
+                        <a  type="button" class="btn btn-danger px-4" data-bs-toggle="modal" data-bs-target="#deleteModal{{ book.books_id }}"><i class="fa-solid fa-ban"></i></a>
                         {%endif%}
                         {%endif%}
+                    </div>
                     </div>
                 </p>
             </div>
@@ -78,4 +80,28 @@
         {% endif %}
     </ul>
 </nav>
+
+<!-- Modal -->
+{% for book in books.items %}
+    <div class="modal fade" id="deleteModal{{ book.books_id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ book.books_id }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel{{ book.books_id }}">Удаление книги</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-break">
+                    Вы уверены, что хотите удалить книгу "{{ book.name }}"?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
+                    <form method="POST" action="{{ url_for('delete_book', book_id=book.books_id) }}">
+                        <button type="submit" class="btn btn-danger">Да</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
 {% endblock %}

@@ -2,28 +2,31 @@
 
 {% block content %}
 <div class="container my-4">
-    <h1 class="text-center">{{ book.name }}</h1>
+    <h1 class="text-center text-break">{{ book.name }}</h1>
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-4 ">
             {% if book.cover_filename %}
             <img src="{{ url_for('image_path', filename=book.cover_filename) }}" class="img-fluid rounded" alt="Обложка книги">
             {% endif %}
         </div>
         <div class="col-md-8">
-            <div><strong>Название книги:</strong> {{ book.name }}</div>
             <div><strong>Жанр(ы):</strong> {{ book.genres.split(',') | join(", ") }}</div>
+            <div class="text-break"><strong>Автор:</strong> {{ book.author }}</div>
+            <div class="text-break"><strong>Издатель:</strong> {{ book.publisher }}</div>
             <div><strong>Год:</strong> {{ book.year }}</div>
+            <div><strong>Кол-во страниц:</strong> {{ book.volume }}</div>
             <div><strong>Средняя оценка:</strong> {% if book.average_rating %}{{ book.average_rating }}{% else %}0{% endif %}</div>
             <div><strong>Количество рецензий:</strong> {{ book.review_count }}</div>
-            <div><strong>Описание:</strong></div>
+            <div class="text-break"><strong>Описание:</strong></div>
             <div>{{ book.desc | safe }}</div>
         </div>
     </div>
     <hr>
+    <div class="text-center">
     <h2>Рецензии</h2>
     {% if reviews %}
         {% for review in reviews %}
-        <div class="review">
+        <div class="review" >
             <h5>{{ review.user.username }}</h5>
             <div><strong>Оценка:</strong> {{ review.rating }}</div>
             <div><strong>Текст рецензии:</strong></div>
@@ -34,5 +37,6 @@
     {% else %}
         <p>Отзывов пока нет.</p>
     {% endif %}
+    </div>
 </div>
 {% endblock %} 
