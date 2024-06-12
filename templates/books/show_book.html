@@ -15,28 +15,63 @@
             <div class="text-break"><strong>Издатель:</strong> {{ book.publisher }}</div>
             <div><strong>Год:</strong> {{ book.year }}</div>
             <div><strong>Кол-во страниц:</strong> {{ book.volume }}</div>
-            <div><strong>Средняя оценка:</strong> {% if book.average_rating %}{{ book.average_rating }}{% else %}0{% endif %}</div>
-            <div><strong>Количество рецензий:</strong> {{ book.review_count }}</div>
+            <div><strong>Средняя оценка:</strong> {% if book.average_rating %}{{ book.average_rating | round(1)}}{% else %}0{% endif %}</div>
+            <div><strong>Количество рецензий:</strong> {{ reviews_count }}</div>
             <div class="text-break"><strong>Описание:</strong></div>
-            <div>{{ book.desc | safe }}</div>
+            <div>{{ book.description | safe }}</div>
         </div>
     </div>
     <hr>
-    <div class="text-center">
-    <h2>Рецензии</h2>
-    {% if reviews %}
-        {% for review in reviews %}
-        <div class="review" >
-            <h5>{{ review.user.username }}</h5>
-            <div><strong>Оценка:</strong> {{ review.rating }}</div>
-            <div><strong>Текст рецензии:</strong></div>
-            <div>{{ review.text | safe }}</div>
-        </div>
-        <hr>
-        {% endfor %}
-    {% else %}
-        <p>Отзывов пока нет.</p>
-    {% endif %}
-    </div>
+
+    <section class="reviews mb-5">
+        <h2 class="mb-3 text-center text-uppercase font-weight-bold">Отзывы</h2>
+        {% if reviews_list %}
+            <ul class="list-unstyled">
+                {% for review in reviews_list %}
+                    <li class="mb-4 p-3 border rounded">
+                        <h5>{{ review.last_name }} {{ review.first_name }} {%if review.middle_name %}{{ review.middle_name }}{% endif %}</h5>
+                        <p class="mb-1"><strong>Дата:</strong> {{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p class="mb-1"><strong>Оценка:</strong> {{ review.rating }} / 5</p>
+                        <p>{{ review.text | safe }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-center">Еще нет отзывов.</p>
+        {% endif %}
+    </section>
+
+    {% if current_user.is_authenticated %}
+        {% set user_review = reviews|selectattr("user_id", "equalto", current_user.id)|first %}
+        {% if user_review %}
+            <div class="alert alert-info">
+                <h5>Ваш отзыв:</h5>
+                <p class="mb-1"><strong>Оценка:</strong> {{ user_review.rating }} / 5</p>
+                <p>{{ user_review.text }}</p>
+            </div>
+        {% endif %}
+                <section class="review-form mb-5">
+                    <h2 class="mb-3 text-center text-uppercase font-weight-bold">Оставить отзыв</h2>
+                    <form method="post" action="{{ url_for('add_review', book_id=book.id) }}">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Оценка</label>
+                            <select id="rating" name="rating" class="form-select">
+                                <option value="5" selected>Отлично</option>
+                                <option value="4">Хорошо</option>
+                                <option value="3">Удовлетворительно</option>
+                                <option value="2">Неудовлетворительно</option>
+                                <option value="1">Плохо</option>
+                                <option value="0">Ужасно</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reply_text" class="form-label">Текст отзыва</label>
+                            <textarea id="text" name="text" class="form-control" rows="5"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Отправить</button>
+                    </form>
+                </section>
+                {% endif %} 
 </div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 {% endblock %} 

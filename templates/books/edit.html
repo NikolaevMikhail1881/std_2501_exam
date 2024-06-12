@@ -26,7 +26,7 @@
         </div>
         <div class="mb-3">
             <label for="desc" class="form-label">Описание</label>
-            <textarea class="form-control" id="desc" name="desc" rows="3" required>{{ book.desc }}</textarea>
+            <textarea class="form-control" id="desc" name="desc" rows="3">{{ book.desc }}</textarea>
         </div>
         <div class="mb-3">
             <label for="genres" class="form-label">Жанры</label>
@@ -39,4 +39,5 @@
         <button type="submit" class="btn btn-primary">Сохранить изменения</button>
     </form>
 </div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 {% endblock %}

@@ -16,10 +16,11 @@
                     {% endif %}
                     <div class="text-break"><strong>Название книги:</strong> {{ book.name }}<br></div>
                     {% set genres_split = book.genres.split(',') %}
+                    {% set genres_length = genres_split|length %}
                     <div><strong>Жанр(ы):</strong> {{ genres_split |join(", ") }}<br></div>
                     <div><strong>Год:</strong> {{ book.year }}<br></div>
-                    <div><strong>Средняя оценка:</strong> {%if book.average_rating%}{{ book.average_rating }}{%else%}0{%endif%}<br></div>
-                    <div><strong>Количество рецензий:</strong> {{ book.review_count }}</div><br>
+                    <div><strong>Средняя оценка:</strong> {%if book.average_rating%}{{ book.average_rating | round(1)}}{%else%}0{%endif%}<br></div>
+                    <div><strong>Количество рецензий:</strong> {{ book.review_count // genres_length }}</div><br>
                     <div class="d-flex flex-row justify-content-center">
                         <a href="{{ url_for('show_book', book_id=book.books_id) }}" type="button" class="btn btn-primary px-4 me-2" ><i class="fa-regular fa-eye" style="color: #ffffff;"></i></a>
                         {%if current_user.is_authenticated%}
@@ -103,5 +104,6 @@
         </div>
     </div>
 {% endfor %}
+
 
 {% endblock %}

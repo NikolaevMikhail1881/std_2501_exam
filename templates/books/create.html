@@ -32,7 +32,7 @@
         </div>
         <div class="mb-3">
           <label for="bookDescription" class="form-label">Описание книги</label>
-          <textarea class="form-control" id="bookDescription" required name="short_description" rows="3"></textarea>
+          <textarea class="form-control" id="bookDescription" name="short_description" rows="3"></textarea>
         </div>
         <div class="mb-3">
           <label for="bookCover" class="form-label">Обложка</label>
@@ -40,13 +40,6 @@
         </div>
         <button class="btn btn-primary" type="submit">Сохранить</button>
     </form>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 {% endblock %}
 
-{% block additional_scripts %}
-    <script>
-      const easyMDE = new EasyMDE({
-        element: document.getElementById('bookDescription'),
-        forceSync: true,
-      });
-    </script>
-{% endblock %}

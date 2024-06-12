@@ -10,9 +10,10 @@ from flask_migrate import Migrate
 from models import Book, User, Review, db, Genre, Cover, GenreToBook, Role
 from auth import bp as auth_bp, init_login_manager
 from flask_paginate import Pagination, get_page_parameter
-from sqlalchemy.orm import joinedload
-from sqlalchemy import func, desc
-
+from sqlalchemy.orm import aliased
+from sqlalchemy import desc, func
+from bleach import clean
+from markdown2 import markdown
 
 app = Flask(__name__)
 app.config.from_pyfile("config.py")
@@ -37,7 +38,7 @@ def index():
             Book.volume.label("books_volume"),
             Book.cover_id.label("books_cover_id"),
             Cover.filename.label("covers_filename"),
-            func.group_concat(Genre.name).label("genres"),
+            func.group_concat(Genre.name.distinct()).label("genres"),
             func.avg(Review.rating).label("average_rating"),
             func.count(Review.id).label("review_count")
         )
@@ -49,7 +50,7 @@ def index():
         .order_by(desc(Book.year))
     )
     paginated_books = books.paginate(page=page, per_page=4)
-# Отображение результатов на главной странице
+    
     return render_template('index.html', books=paginated_books, role=role_name())
 
 
@@ -80,7 +81,7 @@ def add_book():
         author = request.form['author']
         publisher = request.form['publisher']
         volume = request.form['page_count']
-        desc = request.form['short_description']
+        desc = clean(request.form['short_description'])
         genres = request.form.getlist('genres_id')
         year = request.form['year']
 
@@ -164,17 +165,16 @@ def role_name():
     return role.role_name if role else None
         
 @app.route('/books/show_book/<int:book_id>')
-@login_required
 def show_book(book_id):
     
     book = db.session.query(
-        Book.id,
-        Book.name,
-        Book.year,
-        Book.desc,
-        Book.publisher,
-        Book.author,
-        Book.volume,
+        Book.id.label('id'),
+        Book.name.label('name'),
+        Book.year.label('year'),
+        Book.desc.label('description'),
+        Book.publisher.label('publisher'),
+        Book.author.label('author'),
+        Book.volume.label('volume'),
         func.coalesce(func.avg(Review.rating), 0).label('average_rating'),
         func.group_concat(Genre.name).label('genres'),
         Cover.filename.label('cover_filename')
@@ -191,19 +191,34 @@ def show_book(book_id):
     ).group_by(
         Book.id, Cover.filename
     ).first()
-
+    book=book._asdict()
+    book["description"]=(markdown(book["description"]))
     reviews = db.session.query(
-        Review.id,
-        Review.rating,
-        Review.text,
-        Review.user_id
-    ).join(
-        User, User.id == Review.user_id
-    ).filter(
-        Review.book_id == book_id
-    ).all()
+        Review.id.label('review_id'),
+        Review.book_id.label('book_id'),
+        Review.user_id.label('user_id'),
+        Review.rating.label('rating'),
+        Review.text.label('text'),
+        Review.created_at.label('created_at'),
+        User.first_name.label('first_name'),
+        User.last_name.label('last_name'),
+        User.middle_name.label('middle_name'),
+        func.count(GenreToBook.genre_id).label('genre_count')
+        ).join(User, Review.user_id == User.id
+        ).join(GenreToBook, GenreToBook.book_id == Review.book_id
+        ).filter(Review.book_id == book_id
+        ).group_by(Review.id
+        ).order_by(Review.created_at.desc()
+        ).all()
 
-    return render_template('books/show_book.html', book=book, reviews=reviews) 
+    reviews_list = []
+    reviews_count = db.session.query(func.count(Review.id)).filter(Review.book_id == book_id).scalar()
+    for review in reviews:
+        review = review._asdict()    
+        review["text"] = (markdown(review["text"]))
+        reviews_list.append(review)
+
+    return render_template('books/show_book.html', book=book, current_user=current_user, reviews_count=reviews_count, reviews_list=reviews_list)
 
 @app.route('/books/edit/<int:book_id>', methods=['GET', 'POST'])
 @login_required
@@ -277,11 +292,36 @@ def delete_book(book_id):
             
 
 
-    # if cover_path and os.path.exists(cover_path):
-    #     os.remove(cover_path)
+
 
     flash('Книга успешно удалена!', 'success')
     return redirect(url_for('index'))
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+
+
+@app.route('/books/add_review/<int:book_id>', methods=['POST'])
+@login_required
+def add_review(book_id):
+    existing_review = db.session.execute(
+        db.select(Review).where(Review.book_id == book_id, Review.user_id == current_user.id)
+    ).scalar()
+
+    if existing_review:
+        flash('Вы уже оставили отзыв на этот курс.', 'warning')
+        return redirect(url_for('show_book', book_id=book_id))
+
+    review=Review(
+        user_id=current_user.id,
+        rating=request.form.get('rating'),
+        text=request.form.get('text'),
+        book_id=book_id
+    )
+
+    db.session.add(review)
+    db.session.commit()
+
+    return redirect(url_for('show_book', book_id=book_id))
+
+
+
+
