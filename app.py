@@ -77,11 +77,11 @@ def image_path(filename):
 @login_required
 def add_book():
     if request.method == 'POST':
-        name = request.form['title']
+        name = request.form['name']
         author = request.form['author']
         publisher = request.form['publisher']
-        volume = request.form['page_count']
-        desc = clean(request.form['short_description'])
+        volume = request.form['volume']
+        desc = clean(request.form['desc'])
         genres = request.form.getlist('genres_id')
         year = request.form['year']
 
@@ -193,6 +193,8 @@ def show_book(book_id):
     ).first()
     book=book._asdict()
     book["description"]=(markdown(book["description"]))
+   
+
     reviews = db.session.query(
         Review.id.label('review_id'),
         Review.book_id.label('book_id'),
@@ -217,6 +219,8 @@ def show_book(book_id):
         review = review._asdict()    
         review["text"] = (markdown(review["text"]))
         reviews_list.append(review)
+        
+    
 
     return render_template('books/show_book.html', book=book, current_user=current_user, reviews_count=reviews_count, reviews_list=reviews_list)
 

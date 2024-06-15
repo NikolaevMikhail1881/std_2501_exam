@@ -18,7 +18,7 @@
             <div><strong>Средняя оценка:</strong> {% if book.average_rating %}{{ book.average_rating | round(1)}}{% else %}0{% endif %}</div>
             <div><strong>Количество рецензий:</strong> {{ reviews_count }}</div>
             <div class="text-break"><strong>Описание:</strong></div>
-            <div>{{ book.description | safe }}</div>
+            <div class="preformatted-text">{{ book.description | safe }}</div>
         </div>
     </div>
     <hr>

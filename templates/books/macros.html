@@ -1,0 +1,43 @@
+{% macro book_form(action_url, book, genres, book_genre_ids) %}
+    <form action="{{ action_url }}" method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="bookTitle" class="form-label">Название книги</label>
+          <input type="text" required class="form-control" name="name" id="bookTitle" value="{{ book.name if book else '' }}">
+        </div>
+        <div class="mb-3">
+          <label for="bookYear" class="form-label">Год</label>
+          <input type="number" required class="form-control" name="year" id="bookYear" value="{{ book.year if book else '' }}">
+        </div>
+        <div class="mb-3">
+          <label for="bookPublisher" class="form-label">Издательство</label>
+          <input type="text" required class="form-control" name="publisher" id="bookPublisher" value="{{ book.publisher if book else '' }}">
+        </div>
+         <div class="mb-3">
+          <label for="bookAuthor" class="form-label">Автор</label>
+          <input type="text" required class="form-control" name="author" id="bookAuthor" value="{{ book.author if book else '' }}">
+        </div>
+         <div class="mb-3">
+          <label for="bookPageCount" class="form-label">Количество страниц</label>
+          <input type="number" required class="form-control" name="volume" id="bookPageCount" value="{{ book.volume if book else '' }}">
+        </div>
+        <div class="mb-3">
+          <label for="bookGenres" class="form-label">Жанры</label>
+          <select class="form-select" required multiple aria-label="Multiple select example" name="genres_id">
+              {% for genre in genres %}
+                 <option value="{{ genre.id }}" {% if book and genre.id in book_genre_ids %}selected{% endif %}>{{ genre.name }}</option>
+              {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="bookDescription" class="form-label">Описание книги</label>
+          <textarea class="form-control" id="bookDescription" name="desc" rows="3">{{ book.desc if book else '' }}</textarea>
+        </div>
+        {% if request.endpoint == 'add_book' %}
+        <div class="mb-3">
+          <label for="bookCover" class="form-label">Обложка</label>
+          <input class="form-control" type="file" id="bookCover" name="book_cover" {% if not book %}required{% endif %}>
+        </div>
+        {% endif %}
+        <button class="btn btn-primary" type="submit">Сохранить</button>
+    </form>
+{% endmacro %}
